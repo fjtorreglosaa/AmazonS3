@@ -26,7 +26,7 @@ namespace DemoAmazonS3.Controllers
         }
 
         public string folderName = "Images/PyxelEdit/";
-        public string BuketName = "amazon-youtube-fjto-buck";
+        public string BuketName = "udemy-course-buckets-amazon-s3-ftorreglosa";
 
         [HttpGet(Name = "GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get()
@@ -110,6 +110,8 @@ namespace DemoAmazonS3.Controllers
                 StorageClass = S3StorageClass.Standard // Revisar el pricing de cada tipo de clase de almacenamiento
             };
 
+            //await SetBucketPolicyAsync(_s3Client, BuketName);
+
             objectRequest.Metadata.Add("Test", "Metadata");
 
             var response = await _s3Client.PutObjectAsync(objectRequest);
@@ -119,6 +121,33 @@ namespace DemoAmazonS3.Controllers
         public async Task Delete(string filename)
         {
             await _s3Client.DeleteObjectAsync(BuketName, filename);
+        }
+
+        private static async Task SetBucketPolicyAsync(IAmazonS3 s3Client, string bucketName)
+        {
+            var policy = new
+            {
+                Version = "2012-10-17",
+                Statement = new[]
+                {
+                    new
+                    {
+                        Sid = "PublicReadForGetBucketObjects",
+                        Effect = "Allow",
+                        Principal = "*",
+                        Action = "s3:GetObject",
+                        Resource = $"arn:aws:s3:::{bucketName}/*"
+                    }
+                }
+            };
+
+            var request = new PutBucketPolicyRequest
+            {
+                BucketName = bucketName,
+                Policy = Newtonsoft.Json.JsonConvert.SerializeObject(policy)
+            };
+
+            await s3Client.PutBucketPolicyAsync(request);
         }
     }
 }
